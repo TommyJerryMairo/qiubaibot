@@ -24,22 +24,38 @@ class MyParser(HTMLParser):
             yield i
 
 
-def main():
-    res=[]
-    header={'Accept':'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8','Accept-Encoding':'gzip, deflate, sdch, br','Accept-Language':'en-US,en;q=0.8,zh-CN;q=0.6,zh;q=0.4','Cache-Control':'max-age=0','Connection':'keep-alive','User-Agent':'Mozilla/5.0 ()X11; Linux x86_64) AppleWebKit/537.36 ()KHTML, like Gecko) Chrome/53.0.2785.101 Safari/537.36'}
-    for page in range(1,36):
+class Pool():
+    __res=[]
+    __wasted=[]
+    __header={'Accept':'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8','Accept-Encoding':'gzip, deflate, sdch, br','Accept-Language':'en-US,en;q=0.8,zh-CN;q=0.6,zh;q=0.4','Cache-Control':'max-age=0','Connection':'keep-alive','User-Agent':'Mozilla/5.0 ()X11; Linux x86_64) AppleWebKit/537.36 ()KHTML, like Gecko) Chrome/53.0.2785.101 Safari/537.36'}
+    def __init__(self):
+        for page in range(1,36):
+            try:
+                f=requests.get('http://www.qiushibaike.com/textnew/page/'+str(page),headers=self.__header)
+            except ConnectionError :
+                print('ConnectionError\n')
+            parser=MyParser()
+            parser.feed(f.text)
+            for i in parser.out():
+                self.__res=self.__res+list(i)
+            parser.close()
+        self.__res=list(set(self.__res))
+    def refresh(self):
         try:
-            f=requests.get('http://www.qiushibaike.com/textnew/page/'+str(page),headers=header)
+            f=requests.get('http://www.qiushibaike.com/textnew/',headers=self.__header)
         except ConnectionError :
             print('ConnectionError\n')
-#        print("Status:",f.status_code,f.reason)
         parser=MyParser()
         parser.feed(f.text)
         for i in parser.out():
-            res=res+list(parser.out())
-        parser.close()
-    res=list(set(res))
-    
-
-if __name__ == "__main__" :
-    main()
+            if not (i in self.__res):
+                self.__res=self.__res+list(i) 
+    def poo(self):
+        for i in self.__res :
+            if not (i in self.__wasted):
+                self.__wasted=self.__wasted+list(i)
+                yield i
+    def reset(self):
+        self.__wasted=[]
+    def ignore(self,str):
+        self.__wasted=self.__wasted+list(str)
