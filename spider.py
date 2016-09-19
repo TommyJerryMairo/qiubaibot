@@ -34,27 +34,32 @@ class Pool():
                 f=requests.get('http://www.qiushibaike.com/textnew/page/'+str(page),headers=self.__header)
             except ConnectionError :
                 print('ConnectionError\n')
+            print("Status %s: %s"%(f.status_code,f.reason))
             parser=MyParser()
             parser.feed(f.text)
             for i in parser.out():
-                self.__res=self.__res+list(i)
+                self.__res.append(i)
             parser.close()
         self.__res=list(set(self.__res))
+        self.__pool=self.__pripoo()
     def refresh(self):
         try:
             f=requests.get('http://www.qiushibaike.com/textnew/',headers=self.__header)
         except ConnectionError :
             print('ConnectionError\n')
+        print("Status %s: %s"%(f.status_code,f.reason))
         parser=MyParser()
         parser.feed(f.text)
         for i in parser.out():
             if not (i in self.__res):
-                self.__res=self.__res+list(i) 
-    def poo(self):
+                self.__res.append(i)
+    def __pripoo(self):
         for i in self.__res :
             if not (i in self.__wasted):
-                self.__wasted=self.__wasted+list(i)
+                self.__wasted.append(i)
                 yield i
+    def poo(self):
+        return next(self.__pool)
     def reset(self):
         self.__wasted=[]
     def ignore(self,str):
